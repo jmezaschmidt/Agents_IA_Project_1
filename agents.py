@@ -40,7 +40,7 @@ class Object (object):
     def is_alive(self):
         """Objects that are 'alive' should return true."""
         return hasattr(self, 'alive') and self.alive
-
+		
 class Agent (Object):
     """An Agent is a subclass of Object with one required slot,
     .program, which should hold a function that takes one argument, the
@@ -64,7 +64,7 @@ class Agent (Object):
         def program(percept):
             return raw_input('Percept=%s; action? ' % percept)
         return program
-
+	
 def TraceAgent(agent):
     """Wrap the agent's program to print its input and output. This will let
     you see what the agent is doing in the environment."""
@@ -76,11 +76,40 @@ def TraceAgent(agent):
     agent.program = new_program
     return agent
 
+class RandomAgent (Agent):
+    "An agent that chooses an action at random, ignoring all percepts."
+
+    def __init__(self, actions):
+        self.actions = actions
+        super(RandomAgent, self).__init__()
+
+    def make_agent_program(self):
+        actions = self.actions
+        return lambda percept: random.choice(actions)
+
+
 #______________________________________________________________________________
 
 loc_A, loc_B = (0, 0), (1, 0) # The two locations for the Vacuum world
 
+class ReflexVacuumAgent (Agent):
+    "A reflex agent for the two-state vacuum environment. [Fig. 2.8]"
 
+    def __init__(self):
+        super(ReflexVacuumAgent, self).__init__()
+
+    def make_agent_program(self):
+        def program((location, status)):
+            if status == 'Dirty': return 'Suck'
+            elif location == loc_A: return 'Right'
+            elif location == loc_B: return 'Left'
+        return program
+
+def RandomVacuumAgent():
+    "Randomly choose one of the actions from the vacuum environment."
+    return RandomAgent(['Right', 'Left', 'Suck', 'NoOp'])
+
+	
 class Environment (object):
     """Abstract class representing an Environment.  'Real' Environment classes
     inherit from this. Your Environment will typically need to implement:
@@ -116,6 +145,10 @@ class Environment (object):
         for agent in self.agents:
             if agent.is_alive(): return False
         return True
+    
+    def exogenous_change(self):
+        "If there is spontaneous change in the world, override this."
+        pass
 
     def step(self):
         """Run the environment for one time step. If the
@@ -157,7 +190,7 @@ class Environment (object):
         
         if isinstance(obj, Agent):
                 obj.performance = 0
-                self.agents.append(obj)
+                self.agents.append(TraceAgent(obj))
         else:
             self.objects.append(obj)
         return self
@@ -195,12 +228,19 @@ class XYEnvironment (Environment):
         #update(self, objects=[], agents=[], width=width, height=height)
         self.observers = []
         
+    def objects_near(self, location, radius):
+        "Return all objects within radius of location."
+        radius2 = radius * radius
+        return [obj for obj in self.objects
+                if distance2(location, obj.location) <= radius2]
 
     def percept(self, agent):
         "By default, agent perceives objects within radius r."
         
 
     def execute_action(self, agent, action):
+        print agent
+        print action
         agent.bump = False
         if action == 'TurnRight':
             agent.heading = self.turn_heading(agent.heading, -1)
@@ -208,6 +248,14 @@ class XYEnvironment (Environment):
             agent.heading = self.turn_heading(agent.heading, +1)
         elif action == 'Forward':
             self.move_to(agent, vector_add(agent.heading, agent.location))
+#         elif action == 'Grab':
+#             objs = [obj for obj in self.list_objects_at(agent.location)
+#                     if agent.can_grab(obj)]
+#             if objs:
+#                 agent.holding.append(objs[0])
+        elif action == 'Release':
+            if agent.holding:
+                agent.holding.pop()
 
     def object_percept(self, obj, agent): #??? Should go to object?
         "Return the percept for this object."
@@ -215,8 +263,22 @@ class XYEnvironment (Environment):
 
     def default_location(self, object):
         return (random.choice(self.width), random.choice(self.height))
+
+    def move_to(self, obj, destination):
+        "Move an object to a new location."
+
+        # Bumped?
+        obj.bump = self.some_objects_at(destination, Obstacle)
+
+        if not obj.bump:
+            # Move object and report to observers
+            obj.location = destination
+            for o in self.observers:
+                o.object_moved(obj)
         
     def add_object(self, obj, location=(1, 1)):
+        print obj
+        print location
         super(XYEnvironment, self).add_object(obj, location)
         obj.holding = []
         obj.held = None
@@ -280,7 +342,7 @@ class VacuumEnvironment (XYEnvironment):
         self.add_walls()
 
     def object_classes(self):
-        return [Wall, Dirt]
+        return [Wall, Dirt, ReflexVacuumAgent, RandomVacuumAgent]
 
     def percept(self, agent):
         """The percept is a tuple of ('Dirty' or 'Clean', 'Bump' or 'None').
@@ -302,7 +364,39 @@ class VacuumEnvironment (XYEnvironment):
 
         if action != 'Nop':
             agent.performance -= 1
+#______________________________________________________________________________
+
+class SimpleReflexAgent (Agent):
+    """This agent takes action based solely on the percept. [Fig. 2.13]"""
+
+    def __init__(self, rules, interpret_input):
+        self.rules = rules
+        self.interpret_input = interpret_input
+        super(SimpleReflexAgent, self).__init__()
+
+    def make_agent_program(self):
+        rules = self.rules
+        interpret_input = self.interpret_input
+        def program(percept):
+            state = interpret_input(percept)
+            rule = rule_match(state, rules)
+            action = rule.action
+            return action
         return program
+
+def rule_match(state, rules):
+    "Find the first rule that matches state."
+    for rule in rules:
+        if rule.matches(state):
+            return rule
+def compare_agents(EnvFactory, AgentFactories, n=10, steps=1000):
+    """See how well each of several agents do in n instances of an environment.
+    Pass in a factory (constructor) for environments, and several for agents.
+    Create n instances of the environment, and run each agent in copies of 
+    each one for steps. Return a list of (agent, average-score) tuples."""
+    envs = [EnvFactory() for i in range(n)]
+    return [(A, test_agent(A, steps, copy.deepcopy(envs))) 
+            for A in AgentFactories]
 
 def test_agent(AgentFactory, steps, envs):
     "Return the mean score of running an agent in each of the envs, for steps"
@@ -446,9 +540,9 @@ class EnvCanvas (tk.Canvas, object):
 
         for obst in self.env.objects:
             if isinstance(obst, Wall):
-                imgwall=tk.PhotoImage(file=r"images\wall-icon.gif")                                                            
+                imgwall=tk.PhotoImage(file=r"C:\Users\Marjorie\Desktop\Progra IA\images\wall-icon.gif")                                                            
             else:
-                imgwall=tk.PhotoImage(file=r"images\dirt05-icon.gif")
+                imgwall=tk.PhotoImage(file=r"C:\Users\Marjorie\Desktop\Progra IA\images\dirt05-icon.gif")
             test = [imgwall, obst.location]
             self.imagesObj.append(test)
 
@@ -482,15 +576,22 @@ class EnvCanvas (tk.Canvas, object):
             def draw ():
                 obj = agentType()
                 self.env.add_object(obj, cell)
-                #print "Drawing agent %s at %s %s" % (obj, cell, xy)                
-                if isinstance(obj, Wall):
-                    tk_image=tk.PhotoImage(file=r"images\wall-icon.gif")
+                
+                print "Drawing agent %s at cell %s xy %s" % (obj, cell, xy)                
+                if isinstance(obj, ReflexVacuumAgent):
+                    tk_image=tk.PhotoImage(file=r"C:\Users\Marjorie\Desktop\Progra IA\images\vacuum-icon.gif")
+                    self.images.append(tk_image)
+                elif isinstance(obj, RandomAgent):
+                    tk_image=tk.PhotoImage(file=r"C:\Users\Marjorie\Desktop\Progra IA\images\vacuum-icon.gif")
+                    self.images.append(tk_image)
+                elif isinstance(obj, Wall):
+                    tk_image=tk.PhotoImage(file=r"C:\Users\Marjorie\Desktop\Progra IA\images\wall-icon.gif")
                     self.images.append(tk_image)
                 elif isinstance(obj, Dirt):
-                    tk_image=tk.PhotoImage(file=r"images\dirt05-icon.gif")
+                    tk_image=tk.PhotoImage(file=r"C:\Users\Marjorie\Desktop\Progra IA\images\dirt05-icon.gif")
                     self.images.append(tk_image)
                 else:
-                    tk_image=tk.PhotoImage(file=r"images\vacuum-icon.gif")
+                    tk_image=tk.PhotoImage(file=r"C:\Users\Marjorie\Desktop\Progra IA\images\vacuum-icon.gif")
                     self.images.append(tk_image)
                 
                 
@@ -521,8 +622,5 @@ class EnvCanvas (tk.Canvas, object):
         w = self.cellwidth
         return w * row, w * column
     
-v = VacuumEnvironment(5,8);
-"""a = ModelBasedVacuumAgent()
-v.add_object(TraceAgent(a))
-v.run(5)"""
+v = VacuumEnvironment();
 w = EnvFrame(v);
