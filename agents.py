@@ -420,18 +420,22 @@ __doc__ += """
 # and muddle through without a GUI.
 
 import Tkinter as tk
-
+import tkSimpleDialog
+        
 class EnvFrame(tk.Tk, object):
 
-    def __init__(self, env, title = 'AIMA GUI', cellwidth=50, n=10):
+    def __init__(self, env, title = 'Progra IA', cellwidth=50):
 
         # Initialize window
 
         super(EnvFrame, self).__init__()
-        self.title(title)
-
+        self.title(title)        
+        self.withdraw()
         # Create components
-
+        size=tkSimpleDialog.askinteger("Crear Ambiente","Ingrese el tamaño del tablero",parent=self)
+        env = VacuumEnvironment(size+2);
+        self.update()
+        self.deiconify()
         canvas = EnvCanvas(self, env, cellwidth)
         toolbar = EnvToolbar(self, env, canvas)
         for w in [canvas, toolbar]:
@@ -622,5 +626,5 @@ class EnvCanvas (tk.Canvas, object):
         w = self.cellwidth
         return w * row, w * column
     
-v = VacuumEnvironment(5);
-w = EnvFrame(v);
+
+w = EnvFrame(None);
