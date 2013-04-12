@@ -230,10 +230,10 @@ class XYEnvironment (Environment):
     as (0, 1), and a .holding slot, which should be a list of objects
     that are held."""
 
-    def __init__(self, width=10, height=10):
+    def __init__(self, size=10):
         super(XYEnvironment, self).__init__()
-        self.width = width
-        self.height = height
+        self.width = size
+        self.height = size
         #update(self, objects=[], agents=[], width=width, height=height)
         self.observers = []
         
@@ -351,8 +351,8 @@ class VacuumEnvironment (XYEnvironment):
     performance measure is 100 for each dirt cleaned, and -1 for
     each turn taken."""
 
-    def __init__(self, width=10, height=10):
-        super(VacuumEnvironment, self).__init__(width, height)
+    def __init__(self, size=10 ):
+        super(VacuumEnvironment, self).__init__(size)
         self.add_walls()
 
     def object_classes(self):
@@ -430,19 +430,23 @@ __doc__ += """
 # and muddle through without a GUI.
 
 import Tkinter as tk
-
+import tkSimpleDialog
+        
 class EnvFrame(tk.Tk, object):
 
-    def __init__(self, env, title = 'AIMA GUI', cellwidth=50, n=10):
+    def __init__(self, env, title = 'Progra IA', cellwidth=50):
 
         # Initialize window
 
         super(EnvFrame, self).__init__()
-        self.title(title)
-
+        self.title(title)        
+        self.withdraw()
         # Create components
-
-        canvas = EnvCanvas(self, env, cellwidth, n)
+        size=tkSimpleDialog.askinteger("Crear Ambiente","Ingrese el tamaño del tablero",parent=self)
+        env = VacuumEnvironment(size+2);
+        self.update()
+        self.deiconify()
+        canvas = EnvCanvas(self, env, cellwidth)
         toolbar = EnvToolbar(self, env, canvas)
         for w in [canvas, toolbar]:
             w.pack(side="bottom", fill="x", padx="3", pady="3")
@@ -512,9 +516,9 @@ class EnvToolbar(tk.Frame, object):
         
 class EnvCanvas (tk.Canvas, object):
 
-    def __init__ (self, parent, env, cellwidth, n):
-        canvwidth = cellwidth * n # (cellwidth + 1 ) * n
-        canvheight = cellwidth * n # (cellwidth + 1) * n
+    def __init__ (self, parent, env, cellwidth):
+        canvwidth = cellwidth * env.width # (cellwidth + 1 ) * n
+        canvheight = cellwidth * env.width # (cellwidth + 1) * n
         super(EnvCanvas, self).__init__(parent, background="white",
                                         width=canvwidth, height=canvheight)
 
@@ -522,14 +526,14 @@ class EnvCanvas (tk.Canvas, object):
         
         self.env = env
         self.cellwidth = cellwidth
-        self.n = n
+        self.n = env.width
 
         # Draw the gridlines
         
         if cellwidth:
-            for i in range(0, n+1):
-                self.create_line(0, i*cellwidth, n*cellwidth, i*cellwidth)
-                self.create_line(i*cellwidth, 0, i*cellwidth, n*cellwidth)
+            for i in range(0, self.n+1):
+                self.create_line(0, i*cellwidth, self.n*cellwidth, i*cellwidth)
+                self.create_line(i*cellwidth, 0, i*cellwidth, self.n*cellwidth)
                 self.pack(expand=1, fill='both')
         self.pack()
 
@@ -635,5 +639,5 @@ class EnvCanvas (tk.Canvas, object):
         w = self.cellwidth
         return w * row, w * column
     
-v = VacuumEnvironment();
-w = EnvFrame(v);
+
+w = EnvFrame(None);
