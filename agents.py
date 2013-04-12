@@ -458,7 +458,8 @@ class EnvFrame(tk.Tk, object):
         self.option_add('*Label*font', self.customFont)        
         
         size=tkSimpleDialog.askinteger("Crear Ambiente","Ingrese el tamaño del tablero",parent=self)
-        env = VacuumEnvironment(size+2);
+        #env = VacuumEnvironment(size+2);
+        env = VacuumEnvironment();
         self.update()
         self.deiconify()
         self.configure(background='white')
@@ -515,11 +516,13 @@ class EnvToolbar(tk.Frame, object):
     def background_run(self):
         if self.running:
             self.env.step()
+            self.canvas.repintarAgente(self.canvas, self.env)
             # ms = int(1000 * max(float(self.speed), 0.5))
             #ms = max(int(1000 * float(self.delay)), 1)
             delay_sec = 1.0 / max(self.speed, 1.0) # avoid division by zero
-            ms = int(1000.0 * delay_sec)  # seconds to milliseconds
+            ms = int(1000.0 * delay_sec)  # seconds to milliseconds            
             self.after(ms, self.background_run)
+            
 
     def list_things(self):
         print "Objetos en el ambiente:"
@@ -593,7 +596,13 @@ class EnvCanvas (tk.Canvas, object):
 
         for imgO in self.imagesObj:
             self.create_image(self.cell_topleft_xy(imgO[1]), anchor="nw", image=imgO[0])
-   
+
+    def repintarAgente(self, can, envi):
+        self.repintar()
+        for agnt in envi.agents:
+            print agnt.location
+            tk_image=tk.PhotoImage(file=r"images\vacuum.gif")            
+            can.create_image(can.cell_topleft_xy(agnt.location), anchor="nw", image=tk_image)
 
     def repintar(self):
         self.delete("all")        
@@ -601,8 +610,7 @@ class EnvCanvas (tk.Canvas, object):
         self.pintarObjetos()
         
     def user_left(self, event):
-        print 'left at %d, %d' % self.event_cell(event)
-        self.repintar()
+        print 'left at %d, %d' % self.event_cell(event)        
         
     def user_edit_objects(self, event):
         """Choose an object within radius and edit its fields."""
