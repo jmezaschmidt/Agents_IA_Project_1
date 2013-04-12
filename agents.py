@@ -361,7 +361,7 @@ class VacuumEnvironment (XYEnvironment):
     each turn taken."""
 
     def __init__(self, width=10, height=10):
-        super(VacuumEnvironment, self).__init__(width, height)
+        super(VacuumEnvironment, self).__init__(width, width)
         self.add_walls()
 
     def object_classes(self):
@@ -458,8 +458,8 @@ class EnvFrame(tk.Tk, object):
         self.option_add('*Label*font', self.customFont)        
         
         size=tkSimpleDialog.askinteger("Crear Ambiente","Ingrese el tamaño del tablero",parent=self)
-        #env = VacuumEnvironment(size+2);
-        env = VacuumEnvironment();
+        env = VacuumEnvironment(size+2);
+        #env = VacuumEnvironment();
         self.update()
         self.deiconify()
         self.configure(background='white')
@@ -580,8 +580,8 @@ class EnvCanvas (tk.Canvas, object):
     def pintarTablero(self):
         if self.cellwidth:
             for i in range(0, self.n+1):
-                self.create_line(0, i*self.cellwidth, self.n*self.cellwidth, i*self.cellwidth, fill="blue", dash=(4, 4))
-                self.create_line(i*self.cellwidth, 0, i*self.cellwidth, self.n*self.cellwidth, fill="blue", dash=(4, 4))
+                self.create_line(0, i*self.cellwidth, self.n*self.cellwidth, i*self.cellwidth, fill="green")
+                self.create_line(i*self.cellwidth, 0, i*self.cellwidth, self.n*self.cellwidth, fill="green")
                 self.pack(expand=1, fill='both')
         self.pack()
     
