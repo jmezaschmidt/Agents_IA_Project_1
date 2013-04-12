@@ -90,7 +90,7 @@ class RandomAgent (Agent):
 
 #______________________________________________________________________________
 
-loc_A, loc_B = (0, 0), (1, 0) # The two locations for the Vacuum world
+loc_A, loc_B = (1, 1), (2, 1) # The two locations for the Vacuum world
 
 class ReflexVacuumAgent (Agent):
     "A reflex agent for the two-state vacuum environment. [Fig. 2.8]"
@@ -100,9 +100,18 @@ class ReflexVacuumAgent (Agent):
 
     def make_agent_program(self):
         def program((location, status)):
-            if status == 'Dirty': return 'Suck'
-            elif location == loc_A: return 'Right'
-            elif location == loc_B: return 'Left'
+            print 'status'
+            print status
+            print 'location'
+            print location
+            
+            #if status == 'Dirty':
+            if location == 'Dirty':
+                print 'XXXXX'
+                return 'Suck'
+            #elif location == loc_A: return 'Right'
+            #elif location == loc_B: return 'Left'
+            #elif location == 'Left' || location    elif location == 'Right': return 'Left'
         return program
 
 def RandomVacuumAgent():
@@ -221,10 +230,10 @@ class XYEnvironment (Environment):
     as (0, 1), and a .holding slot, which should be a list of objects
     that are held."""
 
-    def __init__(self, size=10):
+    def __init__(self, width=10, height=10):
         super(XYEnvironment, self).__init__()
-        self.width = size
-        self.height = size
+        self.width = width
+        self.height = height
         #update(self, objects=[], agents=[], width=width, height=height)
         self.observers = []
         
@@ -241,21 +250,35 @@ class XYEnvironment (Environment):
     def execute_action(self, agent, action):
         print agent
         print action
+        print "Action"
+        print action
         agent.bump = False
-        if action == 'TurnRight':
-            agent.heading = self.turn_heading(agent.heading, -1)
-        elif action == 'TurnLeft':
-            agent.heading = self.turn_heading(agent.heading, +1)
-        elif action == 'Forward':
-            self.move_to(agent, vector_add(agent.heading, agent.location))
+        actual_pos = agent.location
+        if action == 'Right':            
+            new_pos = (actual_pos[0]+1, actual_pos[1])
+            self.move_to(agent, new_pos)
+        elif action == 'Left':            
+            new_pos = (actual_pos[0]-1, actual_pos[1])
+            self.move_to(agent, new_pos)
+        elif action == 'Up':            
+            new_pos = (actual_pos[0], actual_pos[1]-1)
+            self.move_to(agent, new_pos)
+        elif action == 'Down':            
+            new_pos = (actual_pos[0], actual_pos[1]+1)
+            self.move_to(agent, new_pos)
+            #agent.heading = self.turn_heading(agent.heading, -1)
+        #elif action == 'Left':
+        #    agent.heading = self.turn_heading(agent.heading, +1)
+        #elif action == 'Forward':
+        #    self.move_to(agent, vector_add(agent.heading, agent.location))
 #         elif action == 'Grab':
 #             objs = [obj for obj in self.list_objects_at(agent.location)
 #                     if agent.can_grab(obj)]
 #             if objs:
 #                 agent.holding.append(objs[0])
-        elif action == 'Release':
-            if agent.holding:
-                agent.holding.pop()
+        #elif action == 'Release':
+         #   if agent.holding:
+        #5      agent.holding.pop()
 
     def object_percept(self, obj, agent): #??? Should go to object?
         "Return the percept for this object."
@@ -337,20 +360,20 @@ class VacuumEnvironment (XYEnvironment):
     performance measure is 100 for each dirt cleaned, and -1 for
     each turn taken."""
 
-    def __init__(self, size=10 ):
-        super(VacuumEnvironment, self).__init__(size)
+    def __init__(self, width=10, height=10):
+        super(VacuumEnvironment, self).__init__(width, height)
         self.add_walls()
 
     def object_classes(self):
-        return [Wall, Dirt, ReflexVacuumAgent]
+        return [Wall, Dirt, ReflexVacuumAgent, RandomVacuumAgent, SimpleReflexAgent]
 
     def percept(self, agent):
         """The percept is a tuple of ('Dirty' or 'Clean', 'Bump' or 'None').
         Unlike the TrivialVacuumEnvironment, location is NOT perceived."""
+        print 
         status = if_(self.some_objects_at(agent.location, Dirt),
-                     'Dirty', 'Clean')
-        bump = if_(agent.bump, 'Bump', 'None')
-        return (status, bump)
+                     'Dirty', 'Clean')        
+        return (status, agent.location)
 
     def execute_action(self, agent, action):
         if action == 'Suck':
@@ -369,19 +392,16 @@ class VacuumEnvironment (XYEnvironment):
 class SimpleReflexAgent (Agent):
     """This agent takes action based solely on the percept. [Fig. 2.13]"""
 
-    def __init__(self, rules, interpret_input):
-        self.rules = rules
-        self.interpret_input = interpret_input
+    def __init__(self):                
         super(SimpleReflexAgent, self).__init__()
 
-    def make_agent_program(self):
-        rules = self.rules
-        interpret_input = self.interpret_input
+    def make_agent_program(self):        
         def program(percept):
-            state = interpret_input(percept)
-            rule = rule_match(state, rules)
-            action = rule.action
-            return action
+            print 'percept%s', percept
+            if percept[0] == 'Dirty':
+                return 'Suck'
+            elif percept[0] == 'Clean':
+                return random.choice(['Left','Right','Up','Down'])                            
         return program
 
 def rule_match(state, rules):
@@ -653,3 +673,4 @@ class EnvCanvas (tk.Canvas, object):
     
 
 w = EnvFrame(None);
+
