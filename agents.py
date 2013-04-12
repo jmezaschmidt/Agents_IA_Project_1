@@ -386,9 +386,7 @@ class SimpleReflexAgent (Agent):
     def __init__(self):                
         super(SimpleReflexAgent, self).__init__()
 
-    def make_agent_program(self):
-        rules = self.rules
-        interpret_input = self.interpret_input
+    def make_agent_program(self):        
         def program(percept):
             state = interpret_input(percept)
             rule = rule_match(state, rules)
