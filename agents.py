@@ -342,7 +342,7 @@ class VacuumEnvironment (XYEnvironment):
         self.add_walls()
 
     def object_classes(self):
-        return [Wall, Dirt, ReflexVacuumAgent, RandomVacuumAgent]
+        return [Wall, Dirt, ReflexVacuumAgent]
 
     def percept(self, agent):
         """The percept is a tuple of ('Dirty' or 'Clean', 'Bump' or 'None').
@@ -421,7 +421,9 @@ __doc__ += """
 
 import Tkinter as tk
 import tkSimpleDialog
-        
+import tkFont
+
+
 class EnvFrame(tk.Tk, object):
 
     def __init__(self, env, title = 'Progra IA', cellwidth=50):
@@ -432,16 +434,22 @@ class EnvFrame(tk.Tk, object):
         self.title(title)        
         self.withdraw()
         # Create components
+        self.customFont = tkFont.Font(family="Calibri", size=11)
+        self.option_add('*Label*font', self.customFont)        
+        
         size=tkSimpleDialog.askinteger("Crear Ambiente","Ingrese el tamaño del tablero",parent=self)
         env = VacuumEnvironment(size+2);
         self.update()
         self.deiconify()
-        canvas = EnvCanvas(self, env, cellwidth)
-        toolbar = EnvToolbar(self, env, canvas)
-        for w in [canvas, toolbar]:
+        self.configure(background='white')
+        self.canvas = EnvCanvas(self, env, cellwidth)
+        toolbar = EnvToolbar(self, env, self.canvas)
+        for w in [self.canvas, toolbar]:
             w.pack(side="bottom", fill="x", padx="3", pady="3")
 
-        canvas.pack()
+        Ventana = self
+        Canvas = self.canvas
+        self.canvas.pack()
         toolbar.pack()
         tk.mainloop()
 
@@ -456,7 +464,9 @@ class EnvToolbar(tk.Frame, object):
         self.canvas = canvas
         self.running = False
         self.speed = 1.0
-
+        self.customFont = tkFont.Font(family="Calibri", size=12)
+        self.configure(bd=0)
+        
         # Create buttons and other controls
 
         for txt, cmd in [('Step >', self.env.step),
@@ -464,12 +474,12 @@ class EnvToolbar(tk.Frame, object):
                          ('Detener [ ]', self.stop),
                          ('Listar objetos', self.list_things),
                          ('Listar agentes', self.list_agents)]:
-            tk.Button(self, text=txt, command=cmd).pack(side='left')
+            tk.Button(self, text=txt, command=cmd, font=self.customFont, bd=1).pack(side='left')
 
-        tk.Label(self, text='Speed').pack(side='left')
+        tk.Label(self, text='Speed', bd=0, font=self.customFont).pack(side='left')
         scale = tk.Scale(self, orient='h',
                          from_=(1.0), to=10.0, resolution=1.0,
-                         command=self.set_speed)
+                         command=self.set_speed, bd=0, font=self.customFont)
         scale.set(self.speed)
         scale.pack(side='left')
 
@@ -519,13 +529,14 @@ class EnvCanvas (tk.Canvas, object):
         self.n = env.width
 
         # Draw the gridlines
-        
+        """  
         if cellwidth:
             for i in range(0, self.n+1):
-                self.create_line(0, i*cellwidth, self.n*cellwidth, i*cellwidth)
-                self.create_line(i*cellwidth, 0, i*cellwidth, self.n*cellwidth)
+                self.create_line(0, i*cellwidth, self.n*cellwidth, i*cellwidth, fill="blue", dash=(4, 4))
+                self.create_line(i*cellwidth, 0, i*cellwidth, self.n*cellwidth, fill="blue", dash=(4, 4))
                 self.pack(expand=1, fill='both')
-        self.pack()
+        self.pack()"""
+        self.pintarTablero()
 
         # Set up image dictionary.
 
@@ -541,24 +552,38 @@ class EnvCanvas (tk.Canvas, object):
         self.bind('<Button-2>', self.user_edit_objects)        
         self.bind('<Button-3>', self.user_add_object)
 
-
+        self.pintarObjetos()
+        
+    def pintarTablero(self):
+        if self.cellwidth:
+            for i in range(0, self.n+1):
+                self.create_line(0, i*self.cellwidth, self.n*self.cellwidth, i*self.cellwidth, fill="blue", dash=(4, 4))
+                self.create_line(i*self.cellwidth, 0, i*self.cellwidth, self.n*self.cellwidth, fill="blue", dash=(4, 4))
+                self.pack(expand=1, fill='both')
+        self.pack()
+    
+    def pintarObjetos(self):
         for obst in self.env.objects:
             if isinstance(obst, Wall):
-                imgwall=tk.PhotoImage(file=r"images\wall-icon.gif")                                                            
+                imgwall=tk.PhotoImage(file=r"images\wall.gif")                                                            
             else:
-                imgwall=tk.PhotoImage(file=r"images\dirt05-icon.gif")
+                imgwall=tk.PhotoImage(file=r"images\dirt.gif")
             test = [imgwall, obst.location]
             self.imagesObj.append(test)
 
         for imgO in self.imagesObj:
             self.create_image(self.cell_topleft_xy(imgO[1]), anchor="nw", image=imgO[0])
+   
 
-
-   # for obs in self.env.objects:
-        #dibujar ob    
+    def repintar(self):
+        self.delete("all")        
+        self.pintarTablero()
+        self.pintarObjetos()
+        
     def user_left(self, event):
         print 'left at %d, %d' % self.event_cell(event)
-
+        self.repintar()
+        
     def user_edit_objects(self, event):
         """Choose an object within radius and edit its fields."""
         pass
@@ -583,19 +608,19 @@ class EnvCanvas (tk.Canvas, object):
                 
                 print "Drawing agent %s at cell %s xy %s" % (obj, cell, xy)                
                 if isinstance(obj, ReflexVacuumAgent):
-                    tk_image=tk.PhotoImage(file=r"images\vacuum-icon.gif")
+                    tk_image=tk.PhotoImage(file=r"images\vacuum.gif")
                     self.images.append(tk_image)
                 elif isinstance(obj, RandomAgent):
-                    tk_image=tk.PhotoImage(file=r"images\vacuum-icon.gif")
+                    tk_image=tk.PhotoImage(file=r"images\vacuum.gif")
                     self.images.append(tk_image)
                 elif isinstance(obj, Wall):
-                    tk_image=tk.PhotoImage(file=r"images\wall-icon.gif")
+                    tk_image=tk.PhotoImage(file=r"images\wall.gif")
                     self.images.append(tk_image)
                 elif isinstance(obj, Dirt):
-                    tk_image=tk.PhotoImage(file=r"images\dirt05-icon.gif")
+                    tk_image=tk.PhotoImage(file=r"images\dirt.gif")
                     self.images.append(tk_image)
                 else:
-                    tk_image=tk.PhotoImage(file=r"images\vacuum-icon.gif")
+                    tk_image=tk.PhotoImage(file=r"images\vacuum.gif")
                     self.images.append(tk_image)
                 
                 
@@ -624,7 +649,7 @@ class EnvCanvas (tk.Canvas, object):
         of the cell(row, column)'s top left corner."""
 
         w = self.cellwidth
-        return w * row, w * column
+        return (w * row)+0.5, (w * column)+0.5
     
 
 w = EnvFrame(None);
