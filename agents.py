@@ -540,9 +540,9 @@ class EnvCanvas (tk.Canvas, object):
 
         for obst in self.env.objects:
             if isinstance(obst, Wall):
-                imgwall=tk.PhotoImage(file=r"C:\Users\Marjorie\Desktop\Progra IA\images\wall-icon.gif")                                                            
+                imgwall=tk.PhotoImage(file=r"images\wall-icon.gif")                                                            
             else:
-                imgwall=tk.PhotoImage(file=r"C:\Users\Marjorie\Desktop\Progra IA\images\dirt05-icon.gif")
+                imgwall=tk.PhotoImage(file=r"images\dirt05-icon.gif")
             test = [imgwall, obst.location]
             self.imagesObj.append(test)
 
@@ -579,19 +579,19 @@ class EnvCanvas (tk.Canvas, object):
                 
                 print "Drawing agent %s at cell %s xy %s" % (obj, cell, xy)                
                 if isinstance(obj, ReflexVacuumAgent):
-                    tk_image=tk.PhotoImage(file=r"C:\Users\Marjorie\Desktop\Progra IA\images\vacuum-icon.gif")
+                    tk_image=tk.PhotoImage(file=r"images\vacuum-icon.gif")
                     self.images.append(tk_image)
                 elif isinstance(obj, RandomAgent):
-                    tk_image=tk.PhotoImage(file=r"C:\Users\Marjorie\Desktop\Progra IA\images\vacuum-icon.gif")
+                    tk_image=tk.PhotoImage(file=r"images\vacuum-icon.gif")
                     self.images.append(tk_image)
                 elif isinstance(obj, Wall):
-                    tk_image=tk.PhotoImage(file=r"C:\Users\Marjorie\Desktop\Progra IA\images\wall-icon.gif")
+                    tk_image=tk.PhotoImage(file=r"images\wall-icon.gif")
                     self.images.append(tk_image)
                 elif isinstance(obj, Dirt):
-                    tk_image=tk.PhotoImage(file=r"C:\Users\Marjorie\Desktop\Progra IA\images\dirt05-icon.gif")
+                    tk_image=tk.PhotoImage(file=r"images\dirt05-icon.gif")
                     self.images.append(tk_image)
                 else:
-                    tk_image=tk.PhotoImage(file=r"C:\Users\Marjorie\Desktop\Progra IA\images\vacuum-icon.gif")
+                    tk_image=tk.PhotoImage(file=r"images\vacuum-icon.gif")
                     self.images.append(tk_image)
                 
                 
