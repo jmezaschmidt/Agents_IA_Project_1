@@ -90,7 +90,7 @@ class RandomAgent (Agent):
 
 #______________________________________________________________________________
 
-loc_A, loc_B = (0, 0), (1, 0) # The two locations for the Vacuum world
+loc_A, loc_B = (1, 1), (2, 1) # The two locations for the Vacuum world
 
 class ReflexVacuumAgent (Agent):
     "A reflex agent for the two-state vacuum environment. [Fig. 2.8]"
@@ -100,9 +100,18 @@ class ReflexVacuumAgent (Agent):
 
     def make_agent_program(self):
         def program((location, status)):
-            if status == 'Dirty': return 'Suck'
-            elif location == loc_A: return 'Right'
-            elif location == loc_B: return 'Left'
+            print 'status'
+            print status
+            print 'location'
+            print location
+            
+            #if status == 'Dirty':
+            if location == 'Dirty':
+                print 'XXXXX'
+                return 'Suck'
+            #elif location == loc_A: return 'Right'
+            #elif location == loc_B: return 'Left'
+            #elif location == 'Left' || location    elif location == 'Right': return 'Left'
         return program
 
 def RandomVacuumAgent():
@@ -241,21 +250,26 @@ class XYEnvironment (Environment):
     def execute_action(self, agent, action):
         print agent
         print action
+        print "Action"
+        print action
         agent.bump = False
-        if action == 'TurnRight':
-            agent.heading = self.turn_heading(agent.heading, -1)
-        elif action == 'TurnLeft':
-            agent.heading = self.turn_heading(agent.heading, +1)
-        elif action == 'Forward':
-            self.move_to(agent, vector_add(agent.heading, agent.location))
+        if action == 'Right':
+            actual_pos = agent.location
+            new_pos = (actual_pos[0]+1, actual_pos[1])
+            self.move_to(agent, new_pos)
+            #agent.heading = self.turn_heading(agent.heading, -1)
+        #elif action == 'Left':
+        #    agent.heading = self.turn_heading(agent.heading, +1)
+        #elif action == 'Forward':
+        #    self.move_to(agent, vector_add(agent.heading, agent.location))
 #         elif action == 'Grab':
 #             objs = [obj for obj in self.list_objects_at(agent.location)
 #                     if agent.can_grab(obj)]
 #             if objs:
 #                 agent.holding.append(objs[0])
-        elif action == 'Release':
-            if agent.holding:
-                agent.holding.pop()
+        #elif action == 'Release':
+         #   if agent.holding:
+        #5      agent.holding.pop()
 
     def object_percept(self, obj, agent): #??? Should go to object?
         "Return the percept for this object."
@@ -342,15 +356,15 @@ class VacuumEnvironment (XYEnvironment):
         self.add_walls()
 
     def object_classes(self):
-        return [Wall, Dirt, ReflexVacuumAgent, RandomVacuumAgent]
+        return [Wall, Dirt, ReflexVacuumAgent, RandomVacuumAgent, SimpleReflexAgent]
 
     def percept(self, agent):
         """The percept is a tuple of ('Dirty' or 'Clean', 'Bump' or 'None').
         Unlike the TrivialVacuumEnvironment, location is NOT perceived."""
+        print 
         status = if_(self.some_objects_at(agent.location, Dirt),
-                     'Dirty', 'Clean')
-        bump = if_(agent.bump, 'Bump', 'None')
-        return (status, bump)
+                     'Dirty', 'Clean')        
+        return (status, agent.location)
 
     def execute_action(self, agent, action):
         if action == 'Suck':
@@ -369,9 +383,7 @@ class VacuumEnvironment (XYEnvironment):
 class SimpleReflexAgent (Agent):
     """This agent takes action based solely on the percept. [Fig. 2.13]"""
 
-    def __init__(self, rules, interpret_input):
-        self.rules = rules
-        self.interpret_input = interpret_input
+    def __init__(self):                
         super(SimpleReflexAgent, self).__init__()
 
     def make_agent_program(self):
@@ -574,7 +586,10 @@ class EnvCanvas (tk.Canvas, object):
         
         def draw_agent(agentType):
             def draw ():
+                print agentType
+
                 obj = agentType()
+                
                 self.env.add_object(obj, cell)
                 
                 print "Drawing agent %s at cell %s xy %s" % (obj, cell, xy)                
